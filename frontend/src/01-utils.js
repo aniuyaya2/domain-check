@@ -1,98 +1,83 @@
-// 01-utils.js — 工具函数
+// 01-utils.js — 纯工具函数（无 DOM、无副作用）
 
 // 格式化日期为 YYYY-MM-DD
 function formatDate(date) {
     const d = new Date(date);
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const year = d.getFullYear();
-    return [year, month, day].join('-');
+    return [d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0')].join('-');
 }
 
-// 简单的域名格式验证
+// 域名格式验证
 function isValidDomainFormat(domain) {
-    const domainRegex = /^(?!-)(?!.*--)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
-    return domainRegex.test(domain.toLowerCase());
+    return /^(?!-)(?!.*--)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/.test(domain.toLowerCase());
 }
 
-// 判断是一级域名还是二级域名
+// 判断域名层级
 function getDomainLevel(domain) {
-    const parts = domain.split('.');
-    if (parts.length <= 2) return '一级域名';
-    return '二级域名';
+    return domain.split('.').length <= 2 ? '一级域名' : '二级域名';
 }
 function isPrimaryDomain(domain) {
     return getDomainLevel(domain) === '一级域名';
 }
 
-// 公开模式：用 ***** 隐藏域名前缀，只保留 TLD
+// 公开模式：域名前缀脱敏，只保留 TLD
 function maskDomain(domain) {
     const parts = domain.split('.');
     if (parts.length < 2) return domain;
-    // parts = ['sub', 'example', 'com'] → masked = ['*****', '*****'], tld = 'com'
-    // parts = ['example', 'com'] → masked = ['*****'], tld = 'com'
-    // parts = ['example', 'com', 'ua'] → masked = ['*****', '*****'], tld = 'ua'
     const tld = parts.pop();
-    const masked = parts.map(() => '*****');
-    return [...masked, tld].join('.');
+    return [...parts.map(() => '*****'), tld].join('.');
 }
 
-// 公开模式：隐藏注册账号
+// 公开模式：账号脱敏
 function maskAccount(account) {
-    if (!account) return '';
-    return '***********';
+    return account ? '***********' : '';
 }
 
-// 自动计算域名到期日期
-function calculateExpirationDate() {
-    const registrationDateEl = document.getElementById('registrationDate');
-    const renewalPeriodEl = document.getElementById('renewalPeriod');
-    const renewalUnitEl = document.getElementById('renewalUnit');
-    const expirationDateEl = document.getElementById('expirationDate');
-    const regDateStr = registrationDateEl.value;
-    const period = parseInt(renewalPeriodEl.value);
-    const unit = renewalUnitEl.value;
-
-    // 只有注册日期、续费周期数值和单位都有效时才计算
-    if (regDateStr && period > 0 && unit) {
-        const regDate = new Date(regDateStr);
-        let calculatedExpirationDate = new Date(regDateStr);
-
-        if (unit === 'year') {
-            calculatedExpirationDate.setFullYear(regDate.getFullYear() + period);
-        } else if (unit === 'month') {
-            calculatedExpirationDate.setMonth(regDate.getMonth() + period);
-        }
-        // 格式化日期为 YYYY-MM-DD
-        expirationDateEl.value = formatDate(calculatedExpirationDate);
-    }
+// 解析 groups 字符串 → 数组
+function parseGroups(groupsStr) {
+    return (groupsStr || '').split(',').map(g => g.trim()).filter(Boolean);
 }
 
-// 获取域名状态信息
+// 计算状态（含剩余天数）
 function getDomainStatus(expirationDateStr) {
-    if (!expirationDateStr) {
-        return { statusText: '信息缺失', statusColor: '#95a5a6', daysRemaining: 'N/A' };
-    }
-    
+    if (!expirationDateStr) return { key: 'missing', statusText: '信息缺失', statusColor: STATUS_META.missing.color, daysRemaining: 'N/A' };
+    const expirationTime = Date.parse(expirationDateStr);
+    if (isNaN(expirationTime)) return { key: 'invalid', statusText: '日期格式错误', statusColor: STATUS_META.invalid.color, daysRemaining: 'N/A' };
+
     const now = new Date();
     const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const expirationTime = Date.parse(expirationDateStr);
-    if (isNaN(expirationTime)) {
-        return { statusText: '日期格式错误', statusColor: '#95a5a6', daysRemaining: 'N/A' };
-    }
-    
-    const timeDiff = expirationTime - todayUTC;
-    const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    let statusText = '正常';
-    let statusColor = '#2ecc71';
+    const daysRemaining = Math.ceil((expirationTime - todayUTC) / 86400000);
 
-    if (daysRemaining <= 0) {
-        statusText = '已到期';
-        statusColor = '#e74c3c';
-    } else if (daysRemaining <= globalConfig.daysThreshold) {
-        statusText = '将到期';
-        statusColor = '#f39c12';
-    }
+    let key = 'normal';
+    if (daysRemaining <= 0) key = 'expired';
+    else if (daysRemaining <= state.config.daysThreshold) key = 'warning';
 
-    return { statusText, statusColor, daysRemaining };
+    const meta = STATUS_META[key];
+    return { key, statusText: meta.text, statusColor: meta.color, daysRemaining };
+}
+
+// 域名排序：置顶最近操作 > 状态优先级 > 一级优先 > 注册商字典序
+function sortDomains(domains) {
+    const priority = (d) => STATUS_PRIORITY[getDomainStatus(d.expirationDate).key] ?? 4;
+    return domains.sort((a, b) => {
+        if (state.lastOperated) {
+            if (a.domain === state.lastOperated) return -1;
+            if (b.domain === state.lastOperated) return 1;
+        }
+        const p = priority(a) - priority(b);
+        if (p !== 0) return p;
+        if (p === 3) {
+            const aPrimary = isPrimaryDomain(a.domain), bPrimary = isPrimaryDomain(b.domain);
+            if (aPrimary !== bPrimary) return aPrimary ? -1 : 1;
+        }
+        return (a.system || '').localeCompare(b.system || '');
+    });
+}
+
+// HTML 转义（卡片渲染入 HTML 前统一处理用户输入）
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

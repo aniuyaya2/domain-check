@@ -158,8 +158,8 @@ export function HTML_TEMPLATE(siteName, siteIcon, bgimgURL, githubURL, blogURL, 
 
     ${formModal}
 
-    <!-- 续费弹窗（复用 toast 样式） -->
-    <div id="renewOverlay" class="toast-overlay" style="display:none;">
+    <!-- 续费弹窗 -->
+    <div id="renewOverlay" class="renew-overlay" style="display:none;">
         <div class="toast-card">
             <div class="toast-icon"><i class="fas fa-sync-alt" style="color:#186db3;"></i></div>
             <div class="renew-line">

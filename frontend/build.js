@@ -11,13 +11,12 @@ const OUTPUT = path.join(__dirname, 'script.js');
 const MODULES = [
     '00-config.js',
     '01-utils.js',
-    '07-modal.js',
     '02-api.js',
-    '03-ui.js',
-    '04-form.js',
-    '08-renewal.js',
-    '05-filters.js',
-    '06-init.js',
+    '03-modal.js',
+    '04-render.js',
+    '05-form.js',
+    '06-renewal.js',
+    '07-events.js',
 ];
 
 // 构建 JS 内容
