@@ -21,7 +21,7 @@ export async function authenticate(request, env) {
 export async function handleLogin(request, env, redirectPath = '/') {
     const config = getConfig(env);
     if (request.method === 'GET') {
-        const html = generateLoginPage(false, config.siteName, config.siteIcon, config.bgimgURL, config.githubURL, config.blogURL, config.blogName);
+        const html = generateLoginPage(false, config.siteName, config.siteIcon, config.bgimgURL);
         return new Response(html, { headers: { 'Content-Type': 'text/html' } });
     } else if (request.method === 'POST') {
         let password;
@@ -37,7 +37,7 @@ export async function handleLogin(request, env, redirectPath = '/') {
                 headers.set('Set-Cookie', `auth=${password}; Expires=${expires.toUTCString()}; HttpOnly; Path=/; Secure; SameSite=Lax`);
                 return new Response(null, { status: 302, headers: headers });
             } else {
-                const html = generateLoginPage(true, config.siteName, config.siteIcon, config.bgimgURL, config.githubURL, config.blogURL, config.blogName);
+                const html = generateLoginPage(true, config.siteName, config.siteIcon, config.bgimgURL);
                 return new Response(html, { headers: { 'Content-Type': 'text/html' } });
             }
         } catch (error) {
@@ -48,8 +48,7 @@ export async function handleLogin(request, env, redirectPath = '/') {
 }
 
 // 生成登录页面HTML
-export function generateLoginPage(showError = false, siteName, siteIcon, bgimgURL, githubURL, blogURL, blogName) {
-  const currentYear = new Date().getFullYear();
+export function generateLoginPage(showError = false, siteName, siteIcon, bgimgURL) {
     return `
     <!DOCTYPE html>
     <html lang="zh-CN">
@@ -67,6 +66,9 @@ export function generateLoginPage(showError = false, siteName, siteIcon, bgimgUR
           font-family: Arial, sans-serif;
           background-image: url('${bgimgURL}');
           background-position: center;
+          background-size: cover;
+          background-attachment: fixed;
+          background-color: #e9eceb;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -146,37 +148,7 @@ export function generateLoginPage(showError = false, siteName, siteIcon, bgimgUR
           border-radius: 4px;
           display: ${showError ? 'block' : 'none'};
         }
-        .footer {
-          background-color: none;
-          color: #333333;
-          font-size: 0.8rem;
-          width: 100%;
-          text-align: center;
-          padding: 16px 0;
-          margin-top: 10px;
-        }
-        .footer p {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          align-items: center;
-          gap: 8px;
-          margin: 0;
-        }
-        .footer a {
-          color: #333333;
-          text-decoration: none;
-          transition: color 0.3s ease;
-          white-space: nowrap;
-        }
-        .footer a:hover {
-          color: #186db3;
-        }
         @media (max-width: 768px) {
-          .footer p {
-            line-height: 0.9;
-            font-size: 0.75rem;
-          }
           .login-container {
             width: 90%;
           }
@@ -194,15 +166,6 @@ export function generateLoginPage(showError = false, siteName, siteIcon, bgimgUR
           <button type="submit">登录系统</button>
           <div id="errorMessage" class="error">密码错误，请重试</div>
         </form>
-        <div class="footer">
-          <p>
-            <span>Copyright © ${currentYear} Yutian81</span><span>|</span>
-            <a href="${githubURL}" target="_blank">
-              <i class="fab fa-github"></i> Github</a><span>|</span>
-            <a href="${blogURL}" target="_blank">
-              <i class="fas fa-blog"></i> ${blogName}</a>
-          </p>
-        </div>
       </div>
     </body>
     </html>

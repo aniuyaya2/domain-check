@@ -1,35 +1,19 @@
-import { HTML_CSS } from './style';
-import { HTML_JS } from './script';
+import { HTML_CSS } from './style.js';
+import { HTML_JS } from './script.js';
 
 // 导出背景样式函数
+// 使用固定定位伪元素铺满视口：背景与文档内容高度解耦，
+// 切换分组/翻页导致卡片数量变化时背景不会被拉伸或重排
 export function generateBgStyle(bgimgURL) {
     if (!bgimgURL) return '';
     return `
-    body { 
-        background-color: #e9eceb;
-        background-image: url('${bgimgURL}'); 
-        background-size: cover; 
-        background-attachment: fixed; 
-        background-position: center;
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: #e9eceb url('${bgimgURL}') center / cover no-repeat;
     }`;
-}
-
-// 导出页脚生成函数
-export function generateFooter(githubURL, blogURL, blogName) {
-    const currentYear = new Date().getFullYear();
-    const startYear = 2025;
-    const yearText = currentYear === startYear 
-        ? `Copyright © ${startYear}`
-        : `Copyright © ${startYear}-${currentYear}`;
-    
-    return `
-        <div class="footer">
-            <p><span>${yearText} Yutian81</span><span>|</span>
-                <a href="${githubURL}" target="_blank"><i class="fab fa-github"></i> Github</a><span>|</span>
-                <a href="${blogURL}" target="_blank"><i class="fas fa-blog"></i> ${blogName}</a>
-            </p>
-        </div>
-    `;
 }
 
 function generatePublicHeader(siteName) {
@@ -126,7 +110,6 @@ function generateFormModal() {
 
 export function HTML_TEMPLATE(siteName, siteIcon, bgimgURL, githubURL, blogURL, blogName, isAdmin = false, initialDomains = null) {
     const bgimgStyle = generateBgStyle(bgimgURL);
-    const footerHTML = generateFooter(githubURL, blogURL, blogName);
     const headerHTML = isAdmin ? generateAdminHeader(siteName) : generatePublicHeader(siteName);
     const formModal = isAdmin ? generateFormModal() : '';
     // 公开页面：将服务端脱敏后的域名数据嵌入 HTML（避免前端调用 API 暴露敏感数据）
@@ -197,7 +180,6 @@ export function HTML_TEMPLATE(siteName, siteIcon, bgimgURL, githubURL, blogURL, 
 
     <div id="domainList" class="domain-grid"></div>
     <div id="pagination" class="pagination"></div>
-    <div id="footer">${footerHTML}</div>
 
     <script>${HTML_JS}</script>
 </body>

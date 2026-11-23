@@ -607,31 +607,6 @@ body { color: var(--text); }
     background: rgba(255, 255, 255, 0.7);
 }
 
-/* ===== 页脚 ===== */
-.footer {
-    color: var(--text);
-    font-size: 0.8rem;
-    text-align: center;
-    padding: 14px 0 24px;
-    margin: 0 auto;
-    max-width: var(--content-width);
-}
-.footer p {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-.footer a {
-    color: var(--text);
-    text-decoration: none;
-    transition: color var(--transition);
-    white-space: nowrap;
-}
-.footer a:hover { color: var(--primary); }
-
 /* ===== Toast 对话框 ===== */
 .toast-overlay {
     position: fixed;
@@ -716,8 +691,6 @@ body { color: var(--text); }
     .modal-content { margin: 8% auto; padding: 16px; }
     .toast-card { padding: 22px 18px 20px; }
     .toast-btn { padding: 9px 22px; }
-
-    .footer p { font-size: 0.7rem; gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }

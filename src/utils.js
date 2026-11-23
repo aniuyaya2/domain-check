@@ -5,7 +5,7 @@ export function getConfig(env) {
     return {
         siteName: env.SITENAME || "域名到期监控",
         siteIcon: env.ICON || 'https://pan.811520.xyz/icon/domain-check.png',
-        bgimgURL: env.BGIMG || 'https://pan.811520.xyz/icon/bg_light.webp',
+        bgimgURL: env.BGIMG || 'https://img.mgg.qzz.io/file/image/1785560230866_%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91NAI-%E6%95%B0%E5%AD%97%E8%89%BA%E6%9C%AF.webp',
         githubURL: env.GITHUB_URL || 'https://github.com/yutian81/domain-check',
         blogURL: env.BLOG_URL || 'https://blog.notett.com/post/2025/11/251118-domain-check/',
         blogName: env.BLOG_NAME || 'QingYun Blog',
